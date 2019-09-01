@@ -37,6 +37,35 @@ pub struct Device {
 	ctl:  Fd,
 }
 
+// from mio, v0.6.x, src/sys/unix/mod.rs
+trait IsMinusOne {
+	fn is_minus_one(&self) -> bool;
+}
+
+impl IsMinusOne for i32 {
+	fn is_minus_one(&self) -> bool { *self == -1 }
+}
+impl IsMinusOne for isize {
+	fn is_minus_one(&self) -> bool { *self == -1 }
+}
+
+// from mio, v0.6.x, src/sys/unix/mod.rs
+fn cvt<T: IsMinusOne>(t: T) -> std::io::Result<T> {
+	if t.is_minus_one() {
+		Err(std::io::Error::last_os_error())
+	} else {
+		Ok(t)
+	}
+}
+
+// from mio, v0.6.x, src/sys/unix/io.rs
+fn set_nonblock(fd: libc::c_int) -> io::Result<()> {
+	unsafe {
+		let flags = libc::fcntl(fd, libc::F_GETFL);
+		cvt(libc::fcntl(fd, libc::F_SETFL, flags | libc::O_NONBLOCK)).map(|_|())
+	}
+}
+
 impl Device {
 	/// Create a new `Device` for the given `Configuration`.
 	pub fn new(config: &Configuration) -> Result<Self> {
@@ -70,6 +99,10 @@ impl Device {
 
 			if tunsetiff(tun.0, &mut req as *mut _ as *mut _) < 0 {
 				return Err(io::Error::last_os_error().into());
+			}
+
+			if config.non_blocking {
+				set_nonblock(tun.0)?;
 			}
 
 			let ctl = Fd::new(libc::socket(AF_INET, SOCK_DGRAM, 0))

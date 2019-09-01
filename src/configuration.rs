@@ -23,12 +23,13 @@ pub struct Configuration {
 	pub(crate) name:     Option<String>,
 	pub(crate) platform: platform::Configuration,
 
-	pub(crate) address:     Option<Ipv4Addr>,
-	pub(crate) destination: Option<Ipv4Addr>,
-	pub(crate) broadcast:   Option<Ipv4Addr>,
-	pub(crate) netmask:     Option<Ipv4Addr>,
-	pub(crate) mtu:         Option<i32>,
-	pub(crate) enabled:     Option<bool>,
+	pub(crate) address:     	Option<Ipv4Addr>,
+	pub(crate) destination: 	Option<Ipv4Addr>,
+	pub(crate) broadcast:   	Option<Ipv4Addr>,
+	pub(crate) netmask:     	Option<Ipv4Addr>,
+	pub(crate) mtu:         	Option<i32>,
+	pub(crate) enabled:     	Option<bool>,
+	pub(crate) non_blocking:	bool
 }
 
 impl Configuration {
@@ -85,6 +86,11 @@ impl Configuration {
 	/// Set the interface to be disabled once created.
 	pub fn down(&mut self) -> &mut Self {
 		self.enabled = Some(false);
+		self
+	}
+
+	pub fn non_blocking(&mut self, value: bool) -> &mut Self {
+		self.non_blocking = value;
 		self
 	}
 }
